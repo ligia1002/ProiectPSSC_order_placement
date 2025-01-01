@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProiectPSSC_order_placement.Domain
+namespace ProiectPSSC_order_placement.Domain.Exceptions
 {
     internal class InvalidOrderException : Exception
     {

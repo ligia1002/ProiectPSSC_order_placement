@@ -7,6 +7,6 @@ using System.Threading.Tasks;
 namespace ProiectPSSC_order_placement.Domain.Models
 {
 
-    public record UnvalidatedCustomerInfo(string CustomerName, string EmailAddress);
+    public record UnvalidatedCustomerInfo(Guid CustomerId, string CustomerName, string EmailAddress);
 
 }

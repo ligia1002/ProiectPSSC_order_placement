@@ -6,5 +6,6 @@ using System.Threading.Tasks;
 
 namespace ProiectPSSC_order_placement.Domain.Models
 {
-    public record ValidatedOrderLine(string ProductCode, decimal Quantity);
+    public record ValidatedOrderLine(ProductCode ProductCode, OrderQuantity Quantity);
 }
+

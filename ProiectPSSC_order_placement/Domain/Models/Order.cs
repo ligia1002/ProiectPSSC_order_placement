@@ -10,6 +10,7 @@ namespace ProiectPSSC_order_placement.Domain.Models
     {
         public interface IOrder { }
 
+        // Comanda nevalidata, similar cu UnvalidatedExam
         public record UnvalidatedOrder(
             UnvalidatedCustomerInfo CustomerInfo,
             UnvalidatedAddress ShippingAddress,
@@ -17,6 +18,12 @@ namespace ProiectPSSC_order_placement.Domain.Models
             IReadOnlyCollection<UnvalidatedOrderLine> OrderLines
         ) : IOrder;
 
+        // Comanda invalida, similar cu InvalidExam, care conține motivele invaliditatii
+        public record InvalidOrder(
+            IReadOnlyCollection<string> Reasons
+        ) : IOrder;
+
+        // Comanda validata, similar cu ValidatedExam
         public record ValidatedOrder(
             ValidatedCustomerInfo CustomerInfo,
             ValidatedAddress ShippingAddress,
@@ -24,6 +31,7 @@ namespace ProiectPSSC_order_placement.Domain.Models
             IReadOnlyCollection<ValidatedOrderLine> OrderLines
         ) : IOrder;
 
+        // Comanda pretuita, similar cu CalculatedExam
         public record PricedOrder(
             ValidatedCustomerInfo CustomerInfo,
             ValidatedAddress ShippingAddress,
@@ -32,9 +40,20 @@ namespace ProiectPSSC_order_placement.Domain.Models
             decimal AmountToBill
         ) : IOrder;
 
-        public record PlacedOrderAcknowledgment(
+        // Comanda procesata cu confirmare, similar cu PublishedExam
+        public record AcknowledgedOrder(
             PricedOrder PricedOrder,
-            string AcknowledgmentLetter
+            string AcknowledgmentLetter,
+            DateTime OrderPlacedDate
+        ) : IOrder;
+
+        // Comanda finalizata, poate include detalii de livrare și facturare
+        public record FinalizedOrder(
+            AcknowledgedOrder AcknowledgedOrder,
+            string TrackingNumber,
+            string InvoiceNumber,
+            DateTime FinalizedDate
         ) : IOrder;
     }
 }
+
