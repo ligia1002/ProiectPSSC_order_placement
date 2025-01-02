@@ -8,3 +8,4 @@ namespace ProiectPSSC_order_placement.Domain.Models
 {
     public record UnvalidatedAddress(string Street, string City, string PostalCode, string Country);
 }
+ 
