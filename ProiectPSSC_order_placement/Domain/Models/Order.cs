@@ -47,7 +47,7 @@ namespace ProiectPSSC_order_placement.Domain.Models
             DateTime OrderPlacedDate
         ) : IOrder;
 
-        // Comanda finalizata, poate include detalii de livrare și facturare
+        // Comanda finalizata, poate include detalii de livrare si facturare
         public record FinalizedOrder(
             AcknowledgedOrder AcknowledgedOrder,
             string TrackingNumber,
