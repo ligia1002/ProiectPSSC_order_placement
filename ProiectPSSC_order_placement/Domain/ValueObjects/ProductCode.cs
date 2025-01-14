@@ -4,7 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace ProiectPSSC_order_placement.Domain.Models
+namespace ProiectPSSC_order_placement.Domain.ValueObjects
 {
     public abstract record ProductCode
     {

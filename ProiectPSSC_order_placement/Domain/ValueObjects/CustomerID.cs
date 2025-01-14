@@ -3,13 +3,10 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Text.RegularExpressions;
+
 
 namespace ProiectPSSC_order_placement.Domain.Models
-{
-    using System;
-    using System.Text.RegularExpressions;
-
-    namespace ProiectPSSC_order_placement.Domain.Models
     {
         public class CustomerId
         {
@@ -44,6 +41,5 @@ namespace ProiectPSSC_order_placement.Domain.Models
         {
             public InvalidCustomerIdException(string message) : base(message) { }
         }
-    }
+ }
 
-}

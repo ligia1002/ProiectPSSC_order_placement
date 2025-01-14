@@ -1,4 +1,5 @@
 ﻿using ProiectPSSC_order_placement.Domain.Models;
+using ProiectPSSC_order_placement.Domain.ValueObjects;
 using System;
 using System.Collections.Generic;
 using System.Linq;

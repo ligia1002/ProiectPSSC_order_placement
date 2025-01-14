@@ -1,5 +1,7 @@
 ﻿using ProiectPSSC_order_placement.Domain.Models;
 using ProiectPSSC_order_placement.Domain.Operations;
+using ProiectPSSC_order_placement.Domain.Validation;
+using ProiectPSSC_order_placement.Domain.ValueObjects;
 
 public class ValidateOrderOperation : DomainOperation<Order.UnvalidatedOrder, object, Order.IOrder>
 {

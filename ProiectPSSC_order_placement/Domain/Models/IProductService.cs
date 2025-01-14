@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 
 namespace ProiectPSSC_order_placement.Domain.Models
 {
-    public record UnvalidatedAddress(string Street, string City, string PostalCode, string Country);
+    public interface IProductService
+    {
+        Product GetProductByCode(string productCode);
+    }
 }
- 

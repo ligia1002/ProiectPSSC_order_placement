@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Text.RegularExpressions;
 
-namespace ProiectPSSC_order_placement.Domain.Models
+namespace ProiectPSSC_order_placement.Domain.Validation
 {
     public record ValidatedCustomerInfo
     {
