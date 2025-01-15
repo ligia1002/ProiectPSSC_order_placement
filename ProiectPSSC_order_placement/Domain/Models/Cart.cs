@@ -1,163 +1,60 @@
-﻿using ProiectPSSC_order_placement.Domain.Validation;
+﻿using ProiectPSSC_order_placement.Domain.Services;
+using ProiectPSSC_order_placement.Domain.Validation;
 using ProiectPSSC_order_placement.Domain.ValueObjects;
-using System;
-using System.Collections.Generic;
-using System.Linq;
 
-namespace ProiectPSSC_order_placement.Domain.Models
+public class Cart
 {
-    public interface ICart { }
+    private readonly List<ValidatedOrderLine> _items = new();
+    public Guid CustomerId { get; } // Asocierea coșului cu un client
 
-    public record EmptyCart() : ICart;
+    public IReadOnlyCollection<ValidatedOrderLine> Items => _items.AsReadOnly();
 
-    public record UnvalidatedCart(IReadOnlyCollection<UnvalidatedOrderLine> Items) : ICart;
-
-    public record ValidatedCart(IReadOnlyCollection<ValidatedOrderLine> Items) : ICart;
-
-    public record PaidCart(IReadOnlyCollection<ValidatedOrderLine> Items, decimal TotalPrice) : ICart;
-
-    public class Cart
+    public Cart(Guid customerId)
     {
-        private ICart _state;
-
-        public Cart()
+        if (customerId == Guid.Empty)
         {
-            _state = new EmptyCart();
+            throw new ArgumentNullException(nameof(customerId), "Customer ID cannot be empty.");
         }
+        CustomerId = customerId;
+    }
 
-        public void AddProduct(string productCode, decimal quantity)
+    // Adăugarea unui produs în coș
+    public string AddProduct(string productCode, decimal quantity, IInventoryService inventoryService)
+    {
+        try
         {
-            switch (_state)
+            if (!inventoryService.IsProductInStock(productCode, quantity))
             {
-                case EmptyCart:
-                    var newItems = new List<UnvalidatedOrderLine>
-                    {
-                        new UnvalidatedOrderLine(productCode, quantity)
-                    };
-                    _state = new UnvalidatedCart(newItems);
-                    break;
-
-                case UnvalidatedCart unvalidatedCart:
-                    var updatedItems = new List<UnvalidatedOrderLine>(unvalidatedCart.Items)
-                    {
-                        new UnvalidatedOrderLine(productCode, quantity)
-                    };
-                    _state = new UnvalidatedCart(updatedItems);
-                    break;
-
-                default:
-                    throw new InvalidOperationException("Nu poți adăuga produse în această stare.");
+                return $"Product {productCode} is out of stock.";
             }
-        }
-        public void RemoveProduct(string productCode)
-        {
-            if (_state is UnvalidatedCart unvalidatedCart)
-            {
-                var updatedItems = unvalidatedCart.Items
-                    .Where(item => item.ProductCode != productCode)
-                    .ToList();
 
-                if (updatedItems.Any())
-                {
-                    _state = new UnvalidatedCart(updatedItems);
-                }
-                else
-                {
-                    // Dacă nu mai există produse, coșul devine gol
-                    _state = new EmptyCart();
-                }
+            var validatedProductCode = ProductCode.Create(productCode);
+            var validatedQuantity = OrderQuantity.CreateUnitQuantity(quantity, productCode, inventoryService);
+
+            var existingItem = _items.FirstOrDefault(item => item.ProductCode == validatedProductCode);
+            if (existingItem != null)
+            {
+                // Actualizează cantitatea produsului existent
+                var updatedQuantity = existingItem.Quantity.Quantity + quantity;
+                _items.Remove(existingItem);
+                _items.Add(new ValidatedOrderLine(validatedProductCode, OrderQuantity.CreateUnitQuantity(updatedQuantity, productCode, inventoryService)));
             }
             else
             {
-                throw new InvalidOperationException("Nu poți elimina produse în această stare.");
+                // Adaugă produsul ca unul nou
+                _items.Add(new ValidatedOrderLine(validatedProductCode, validatedQuantity));
             }
-        }
 
-        public void ValidateCart()
+            return "Product added successfully.";
+        }
+        catch (Exception ex)
         {
-            if (_state is UnvalidatedCart unvalidatedCart)
-            {
-                var validatedItems = unvalidatedCart.Items
-                    .Select(item =>
-                    {
-                        var productCode = ProductCode.Create(item.ProductCode);
-                        var orderQuantity = OrderQuantity.CreateUnitQuantity(item.Quantity);
-                        return new ValidatedOrderLine(productCode, orderQuantity);
-                    })
-                    .ToList();
-                _state = new ValidatedCart(validatedItems);
-            }
-            else
-            {
-                throw new InvalidOperationException("Doar un coș nevalidat poate fi validat.");
-            }
+            return $"Error adding product: {ex.Message}";
         }
+    }
 
-        public void PayCart(decimal unitPrice = 10m)
-        {
-            if (_state is ValidatedCart validatedCart)
-            {
-                var totalPrice = validatedCart.Items.Sum(item => item.Quantity.Quantity * unitPrice);
-                _state = new PaidCart(validatedCart.Items, totalPrice);
-            }
-            else
-            {
-                throw new InvalidOperationException("Doar un coș validat poate fi plătit.");
-            }
-        }
-
-        public void DisplayCart()
-        {
-            switch (_state)
-            {
-                case EmptyCart:
-                    Console.WriteLine("Coșul este gol.");
-                    break;
-
-                case UnvalidatedCart unvalidatedCart:
-                    Console.WriteLine("Coșul conține următoarele produse (nevalidate):");
-                    foreach (var item in unvalidatedCart.Items)
-                    {
-                        Console.WriteLine($"- Cod produs: {item.ProductCode}, Cantitate: {item.Quantity}");
-                    }
-                    break;
-
-                case ValidatedCart validatedCart:
-                    Console.WriteLine("Coșul conține următoarele produse (validate):");
-                    foreach (var item in validatedCart.Items)
-                    {
-                        Console.WriteLine($"- Cod produs: {item.ProductCode.Value}, Cantitate: {item.Quantity.Quantity}");
-                    }
-                    break;
-
-                case PaidCart paidCart:
-                    Console.WriteLine("Coșul a fost plătit. Produsele sunt:");
-                    foreach (var item in paidCart.Items)
-                    {
-                        Console.WriteLine($"- Cod produs: {item.ProductCode.Value}, Cantitate: {item.Quantity.Quantity}");
-                    }
-                    Console.WriteLine($"Total de plată: {paidCart.TotalPrice:C}");
-                    break;
-
-                default:
-                    Console.WriteLine("Stare necunoscută a coșului.");
-                    break;
-            }
-        }
-        public void TransitionToValidated()
-        {
-            if (_state is UnvalidatedCart unvalidatedCart)
-            {
-                var validatedItems = unvalidatedCart.Items.Select(item =>
-                    new ValidatedOrderLine(ProductCode.Create(item.ProductCode), OrderQuantity.CreateUnitQuantity(item.Quantity))
-                ).ToList();
-                _state = new ValidatedCart(validatedItems);
-            }
-            else
-            {
-                throw new InvalidOperationException("Doar un coș nevalidat poate fi validat.");
-            }
-        }
-
+    public void ClearCart()
+    {
+        _items.Clear();
     }
 }

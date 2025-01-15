@@ -15,7 +15,8 @@ namespace ProiectPSSC_order_placement.Domain.Operations
             var orderPlacedDate = DateTime.UtcNow;
 
             return new Order.AcknowledgedOrder(
-                entity,
+                entity.OrderId,
+                entity, 
                 acknowledgmentLetter,
                 orderPlacedDate
             );

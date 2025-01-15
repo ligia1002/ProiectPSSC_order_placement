@@ -12,29 +12,33 @@ namespace ProiectPSSC_order_placement.Domain.Models
     {
         public interface IOrder { }
 
-        // Comanda nevalidata, similar cu UnvalidatedExam
+        // Comanda nevalidata
         public record UnvalidatedOrder(
+            Guid OrderId, // ID-ul unic al comenzii
             UnvalidatedCustomerInfo CustomerInfo,
             UnvalidatedAddress ShippingAddress,
             UnvalidatedAddress BillingAddress,
             IReadOnlyCollection<UnvalidatedOrderLine> OrderLines
         ) : IOrder;
 
-        // Comanda invalida, similar cu InvalidExam, care conține motivele invaliditatii
+        // Comanda invalida, care conține motivele invaliditatii
         public record InvalidOrder(
+            Guid OrderId, // ID-ul unic al comenzii
             IReadOnlyCollection<string> Reasons
         ) : IOrder;
 
-        // Comanda validata, similar cu ValidatedExam
+        // Comanda validata
         public record ValidatedOrder(
+            Guid OrderId, // ID-ul unic al comenzii
             ValidatedCustomerInfo CustomerInfo,
             ValidatedAddress ShippingAddress,
             ValidatedAddress BillingAddress,
             IReadOnlyCollection<ValidatedOrderLine> OrderLines
         ) : IOrder;
 
-        // Comanda pretuita, similar cu CalculatedExam
+        // Comanda pretuita
         public record PricedOrder(
+            Guid OrderId, // ID-ul unic al comenzii
             ValidatedCustomerInfo CustomerInfo,
             ValidatedAddress ShippingAddress,
             ValidatedAddress BillingAddress,
@@ -42,15 +46,17 @@ namespace ProiectPSSC_order_placement.Domain.Models
             decimal AmountToBill
         ) : IOrder;
 
-        // Comanda procesata cu confirmare, similar cu PublishedExam
+        // Comanda procesata cu confirmare
         public record AcknowledgedOrder(
+            Guid OrderId, // ID-ul unic al comenzii
             PricedOrder PricedOrder,
             string AcknowledgmentLetter,
             DateTime OrderPlacedDate
         ) : IOrder;
 
-        // Comanda finalizata, poate include detalii de livrare si facturare
+        // Comanda finalizata
         public record FinalizedOrder(
+            Guid OrderId, // ID-ul unic al comenzii
             AcknowledgedOrder AcknowledgedOrder,
             string TrackingNumber,
             string InvoiceNumber,
@@ -58,4 +64,3 @@ namespace ProiectPSSC_order_placement.Domain.Models
         ) : IOrder;
     }
 }
-

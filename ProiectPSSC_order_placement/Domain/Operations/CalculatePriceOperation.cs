@@ -27,6 +27,7 @@ namespace ProiectPSSC_order_placement.Domain.Operations
 
             // Crearea comenzii cu pret calculat
             return new Order.PricedOrder(
+                entity.OrderId,
                 entity.CustomerInfo,
                 entity.ShippingAddress,
                 entity.BillingAddress,

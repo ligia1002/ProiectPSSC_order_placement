@@ -1,59 +1,63 @@
 ﻿using ProiectPSSC_order_placement.Domain.Models;
 using ProiectPSSC_order_placement.Domain.Operations;
+using ProiectPSSC_order_placement.Domain.Services;
 using ProiectPSSC_order_placement.Domain.Validation;
 using ProiectPSSC_order_placement.Domain.ValueObjects;
 
-public class ValidateOrderOperation : DomainOperation<Order.UnvalidatedOrder, object, Order.IOrder>
-{
-    public override Order.IOrder Transform(Order.UnvalidatedOrder entity, object? state)
+  public class ValidateOrderOperation : DomainOperation<Order.UnvalidatedOrder, object, Order.IOrder>
     {
-        // Validarea informatiilor despre client
-        if (!ValidatedCustomerInfo.TryParse(
-            entity.CustomerInfo.CustomerId,
-            entity.CustomerInfo.CustomerName,
-            entity.CustomerInfo.EmailAddress,
-            out var validatedCustomerInfo))
+        public override Order.IOrder Transform(Order.UnvalidatedOrder entity, object? state)
         {
-            return new Order.InvalidOrder(new List<string> { "Invalid customer information." });
-        }
+            var orderId = Guid.NewGuid(); // Generăm un OrderId unic pentru comandă
 
-        // Validarea adreselor
-        if (!ValidatedAddress.TryParse(entity.ShippingAddress.Street, entity.ShippingAddress.City, entity.ShippingAddress.PostalCode, entity.ShippingAddress.Country, out var validatedShippingAddress) ||
-            !ValidatedAddress.TryParse(entity.BillingAddress.Street, entity.BillingAddress.City, entity.BillingAddress.PostalCode, entity.BillingAddress.Country, out var validatedBillingAddress))
-        {
-            return new Order.InvalidOrder(new List<string> { "Invalid address information." });
-        }
-
-        // Validarea liniilor comenzii
-        var validatedLines = entity.OrderLines
-            .Select(line =>
+            // Validarea informatiilor despre client
+            if (!ValidatedCustomerInfo.TryParse(
+                entity.CustomerInfo.CustomerId,
+                entity.CustomerInfo.CustomerName,
+                entity.CustomerInfo.EmailAddress,
+                out var validatedCustomerInfo))
             {
-                try
-                {
-                    var productCode = ProductCode.Create(line.ProductCode);
-                    var quantity = OrderQuantity.CreateUnitQuantity(line.Quantity);
-                    return new ValidatedOrderLine(productCode, quantity);
-                }
-                catch
-                {
-                    return null; // Linie invalida
-                }
-            })
-            .Where(line => line != null)
-            .Cast<ValidatedOrderLine>()
-            .ToList();
+                return new Order.InvalidOrder(orderId, new List<string> { "Invalid customer information." });
+            }
 
-        if (!validatedLines.Any())
-        {
-            return new Order.InvalidOrder(new List<string> { "No valid order lines." });
+            // Validarea adreselor
+            if (!ValidatedAddress.TryParse(entity.ShippingAddress.Street, entity.ShippingAddress.City, entity.ShippingAddress.PostalCode, entity.ShippingAddress.Country, out var validatedShippingAddress) ||
+                !ValidatedAddress.TryParse(entity.BillingAddress.Street, entity.BillingAddress.City, entity.BillingAddress.PostalCode, entity.BillingAddress.Country, out var validatedBillingAddress))
+            {
+                return new Order.InvalidOrder(orderId, new List<string> { "Invalid address information." });
+            }
+
+            // Validarea liniilor comenzii
+            var validatedLines = entity.OrderLines
+                .Select(line =>
+                {
+                    try
+                    {
+                        var productCode = ProductCode.Create(line.ProductCode);
+                        var quantity = OrderQuantity.CreateUnitQuantity(line.Quantity, line.ProductCode, state as IInventoryService);
+                        return new ValidatedOrderLine(productCode, quantity);
+                    }
+                    catch
+                    {
+                        return null; // Linie invalida
+                    }
+                })
+                .Where(line => line != null)
+                .Cast<ValidatedOrderLine>()
+                .ToList();
+
+            if (!validatedLines.Any())
+            {
+                return new Order.InvalidOrder(orderId, new List<string> { "No valid order lines." });
+            }
+
+            // Crearea comenzii validate
+            return new Order.ValidatedOrder(
+                orderId,
+                validatedCustomerInfo!,
+                validatedShippingAddress!,
+                validatedBillingAddress!,
+                validatedLines
+            );
         }
-
-        // Crearea comenzii validate
-        return new Order.ValidatedOrder(
-            validatedCustomerInfo,
-            validatedShippingAddress,
-            validatedBillingAddress,
-            validatedLines
-        );
-    }
 }
